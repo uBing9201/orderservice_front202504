@@ -15,6 +15,8 @@ export const AuthContextProvider = (props) => {
 
   // 로그인 시 실행할 핸들러
   const loginHandler = (loginData) => {
+    console.log(loginData);
+
     // 백엔드가 응답한 JSON 인증 정보를 클라이언트쪽에 보관하자.
     localStorage.setItem('ACCESS_TOKEN', loginData.token);
     localStorage.setItem('USER_ID', loginData.id);
@@ -22,6 +24,13 @@ export const AuthContextProvider = (props) => {
 
     setIsLoggedIn(true);
     setUserRole(loginData.role);
+  };
+
+  // 로그아웃 핸들러
+  const logoutHandler = () => {
+    localStorage.clear(); // 로컬스토리지 전체 삭제
+    setIsLoggedIn(false);
+    setUserRole('');
   };
 
   // 첫 렌더링 시에 이전 로그인 정보를 확인해서 로그인 상태 유지 시키기.
@@ -37,6 +46,7 @@ export const AuthContextProvider = (props) => {
       value={{
         isLoggedIn,
         onLogin: loginHandler,
+        onLogout: logoutHandler,
         userRole,
       }}
     >
@@ -44,3 +54,5 @@ export const AuthContextProvider = (props) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;
