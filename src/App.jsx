@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Home from './components/Home';
 import Footer from './components/Footer';
 import { Route, Routes } from 'react-router-dom';
+import MemberCreate from './components/MemberCreate';
 
 const App = () => {
   return (
@@ -11,6 +12,7 @@ const App = () => {
       <div className='content-wrapper'>
         <Routes>
           <Route path='/' element={<Home />} />
+          <Route path='/member/create' element={<MemberCreate />} />
         </Routes>
       </div>
       <Footer />
