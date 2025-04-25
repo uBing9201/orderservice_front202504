@@ -14,6 +14,9 @@ import {
 import React, { useContext } from 'react';
 import CartContext from '../context/CartContext';
 import axios from 'axios';
+import axiosInstance from '../configs/axios-config';
+import { handleAxiosError } from '../configs/HandleAxiosError';
+import { API_BASE_URL, ORDER } from '../configs/host-config';
 
 const OrderPage = () => {
   const { productsInCart, clearCart: onClear } = useContext(CartContext);
@@ -60,21 +63,16 @@ const OrderPage = () => {
     // axios는 200번대 정상 응답이 아닌 모든 것을 예외로 처리하기 때문에
     // try, catch로 작성합니다. (fetch는 400번대 응답에도 예외가 발생하진 않음)
     try {
-      const res = await axios.post(
-        'http://localhost:8181/order/create',
+      const res = await axiosInstance.post(
+        `${API_BASE_URL}${ORDER}/create`,
         orderProducts,
-        {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('ACCESS_TOKEN'),
-          },
-        },
       );
+
       // const data = res.json(); -> fetch를 사용했을 때는 데이터를 꺼내는 과정이 있음.
       alert('주문이 완료되었습니다.');
       clearCart();
     } catch (err) {
-      console.log(err);
-      alert('주문 실패!');
+      handleAxiosError(err);
     }
   };
 

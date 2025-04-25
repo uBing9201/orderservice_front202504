@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL, USER } from '../configs/host-config';
 
 const MemberCreate = () => {
   const [name, setName] = useState('');
@@ -38,7 +39,7 @@ const MemberCreate = () => {
       },
     };
 
-    const res = await fetch(`http://localhost:8181/user/create`, {
+    const res = await fetch(`${API_BASE_URL}${USER}/create`, {
       method: 'POST',
       headers: {
         'Content-type': 'application/json',
