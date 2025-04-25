@@ -76,10 +76,10 @@ axiosInstance.interceptors.response.use(
         console.log(error);
         // 백엔드에서 401을 보낸거 -> Refresh도 만료된 상황 (로그아웃처럼 처리해줘야 함.)
         localStorage.clear();
+        // 재발급 요청도 거절당하면 인스턴스를 호출한 곳으로 에러 정보 리턴.
+        return Promise.reject(error);
       }
     }
-    // 재발급 요청도 거절당하면 인스턴스를 호출한 곳으로 에러 정보 리턴.
-    return Promise.reject(error);
   },
 );
 
