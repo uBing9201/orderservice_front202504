@@ -10,6 +10,7 @@ import ProductList from './components/ProductList';
 import './App.css';
 import { CartContextProvider } from './context/CartContext';
 import OrderPage from './components/OrderPage';
+import MyPage from './components/MyPage';
 
 const App = () => {
   return (
@@ -24,6 +25,7 @@ const App = () => {
               <Route path='/login' element={<LoginPage />} />
               <Route path='/product/list' element={<ProductList />} />
               <Route path='/order/cart' element={<OrderPage />} />
+              <Route path='/mypage' element={<MyPage />} />
             </Routes>
           </div>
           <Footer />
