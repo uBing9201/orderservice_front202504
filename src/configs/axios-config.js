@@ -39,9 +39,47 @@ axiosInstance.interceptors.request.use(
 // 응답용 인터셉터 설정
 axiosInstance.interceptors.response.use(
   (response) => response, // 응답에 문제가 없다면 그대로 응답 객체 리턴.
-  (error) => {
+  async (error) => {
     console.log('response interceptor 동작함! 응답에 문제가 발생!');
     console.log(error);
+
+    if (error.response.data.message === 'NO_LOGIN') {
+      console.log('아예 로그인을 하지 않아서 재발급 요청 들어갈 수 없음!');
+      return Promise.reject(error);
+    }
+
+    // 원래의 요청 정보를 기억해 놓자 -> 새 토큰 발급 받아서 다시 시도할 거니깐.
+    const originalRequest = error.config;
+
+    // 토큰 재발급 로직 작성
+    if (error.response.status === 401) {
+      console.log('응답상태 401 발생! 토큰 재발급 필요!');
+
+      try {
+        const id = localStorage.getItem('USER_ID');
+
+        const res = await axios.post('http://localhost:8181/user/refresh', {
+          id,
+        });
+        const newToken = res.data.result.token; // axios는 json() 안씁니다.
+        localStorage.setItem('ACCESS_TOKEN', newToken); // 동일한 이름으로 토큰 담기 (덮어씀)
+
+        // 실패한 원본 요청 정보에서 Authorization의 값을 새 토큰으로 갈아 끼우자
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        // axios 인스턴스의 header Authorization도 새 토큰으로 갈아 끼우자.
+        axiosInstance.defaults.headers.Authorization = `Bearer ${newToken}`;
+
+        // axiosInstance를 사용하여 다시한번 원본 요청을 보내고, 응답은 원래 호출한 곳으로 리턴
+        return axiosInstance(originalRequest);
+      } catch (error) {
+        console.log(error);
+        // 백엔드에서 401을 보낸거 -> Refresh도 만료된 상황 (로그아웃처럼 처리해줘야 함.)
+        localStorage.clear();
+      }
+    }
+    // 재발급 요청도 거절당하면 인스턴스를 호출한 곳으로 에러 정보 리턴.
+    return Promise.reject(error);
   },
 );
 
