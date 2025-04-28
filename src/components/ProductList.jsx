@@ -19,12 +19,19 @@ import React, { useContext, useEffect, useState } from 'react';
 import AuthContext from '../context/UserContext';
 import CartContext from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { throttle } from 'lodash';
 
 const ProductList = ({ pageTitle }) => {
   const [searchType, setSearchType] = useState('optional');
   const [searchValue, setSearchValue] = useState('');
   const [productList, setProductList] = useState([]);
   const [selected, setSelected] = useState({});
+  const [currentPage, setCurrentPage] = useState(0); // 현재 페이지를 나타내는 변수
+  const [isLastPage, setLastPage] = useState(false); // 마지막 페이지 여부
+  // 현재 로딩중이냐? -> 백엔드로부터 상품 목록 요청을 보내서 아직 데이터를 받아오는 중인가?
+  const [isLoading, setIsLoading] = useState(false);
+  const pageSize = 15;
 
   const { userRole } = useContext(AuthContext);
   const isAdmin = userRole === 'ADMIN';
@@ -33,16 +40,70 @@ const ProductList = ({ pageTitle }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadProduct();
+    loadProduct(); // 처음 화면에 진입하면 1페이지 내용을 불러오자. (매개값은 필요 없음)
+    // 쓰로틀링: 짧은 시간동안 연속해서 발생한 이벤트들을 일정 시간으로 그룹화 하여
+    // 순차적으로 적용할 수 있게 하는 기법 -> 스크롤 페이징
+    // 디바운싱: 짧은 시간동안 연속해서 발생한 이벤트를 호출하지 않다가 마지막 이벤트로부터
+    // 일정 시간 이후에 한번만 호출하게 하는 기능. -> 입력값 검증
+    const throttledScroll = throttle(scrollPagination, 1000);
+    window.addEventListener('scroll', throttledScroll);
+
+    // 클린업 함수: 다른 컴포넌트가 렌더링 될 때 이벤트 해제
+    return () => window.removeEventListener('scroll', throttledScroll);
   }, []);
 
-  // 상품 목록을 백엔드에 요청하는 함수
-  const loadProduct = async (number, size) => {
-    const res = await fetch('http://localhost:8181/product/list');
-    const data = await res.json();
+  useEffect(() => {
+    // useEffect는 하나의 컴포넌트에서 여러 개 선언이 가능.
+    // 스크롤 이벤트에서 다음 페이지 번호를 준비했고,
+    // 상태가 바뀌면 그 때 백엔드로 요청을 보낼 수 있게 로직을 나누었습니다.
+    if (currentPage > 0) loadProduct();
+  }, [currentPage]);
 
-    // 백엔드로부터 전달받은 상품 목록을 상태 변수에 세팅.
-    setProductList(data.result);
+  // 상품 목록을 백엔드에 요청하는 함수
+  const loadProduct = async () => {
+    // 아직 로딩 중이라면 or 이미 마지막 페이지라면 더이상 진행하지 말어라.
+    if (isLoading || isLastPage) return;
+
+    console.log('아직 보여줄 컨텐트 더 있음!');
+
+    const params = {
+      size: pageSize,
+      page: currentPage,
+    };
+
+    setIsLoading(true); // 요청 보내기 바로 직전에 로딩 상태 true 만들기
+
+    try {
+      const res = await axios.get('http://localhost:8181/product/list', {
+        params,
+      });
+      const data = await res.data;
+      console.log('result.length: ', data.result.length);
+
+      if (data.result.length === 0) {
+        setLastPage(true);
+      } else {
+        // 백엔드로부터 전달받은 상품 목록을 상태 변수에 세팅.
+        setProductList((prevList) => [...prevList, ...data.result]);
+      }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      // 요청에 대한 응답 처리가 끝나고 난 후 로딩 상태를 다시 false로
+      setIsLoading(false);
+    }
+  };
+
+  const scrollPagination = () => {
+    // 브라우저 창의 높이 + 현재 페이지에서 스크롤 된 픽셀 값
+    //>= (스크롤이 필요 없는)페이지 전체 높이에서 100px 이내에 도달했는가?
+    const isBottom =
+      window.innerHeight + document.documentElement.scrollTop >=
+      document.documentElement.scrollHeight - 100;
+    if (isBottom && !isLastPage && !isLoading) {
+      // 스크롤이 특정 구간에 도달하면 바로 요청 보내는 게 아니라 다음 페이지 번호를 준비하겠다.
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
   };
 
   // 장바구니 클릭 이벤트 핸들러
@@ -95,9 +156,6 @@ const ProductList = ({ pageTitle }) => {
       [productId]: checked,
     }));
   };
-
-  console.log(selected);
-  console.log(productList);
 
   return (
     <Container>
