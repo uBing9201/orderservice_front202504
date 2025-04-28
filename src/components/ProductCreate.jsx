@@ -20,7 +20,8 @@ const ProductCreate = () => {
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('');
-  const [productImage, setProductImage] = useState(null);
+  const [productImage, setProductImage] = useState(null); // 백엔드로 보낼 파일 그 자체
+  const [thumbnailImage, setThumbnailImage] = useState(null); // 화면단에 표시할 썸네일
   const navigate = useNavigate();
   const { onLogout } = useContext(AuthContext);
 
@@ -58,9 +59,10 @@ const ProductCreate = () => {
     const file = $fileTag.current.files[0];
     const reader = new FileReader();
     reader.readAsDataURL(file);
+    setProductImage(file); // 백엔드로 보낼 데이터는 파일 원본을 집어넣고,
 
     reader.onloadend = () => {
-      setProductImage(reader.result);
+      setThumbnailImage(reader.result); // 썸네일은 FileReader의 처리 결과값을 세팅.
     };
   };
 
@@ -83,7 +85,7 @@ const ProductCreate = () => {
                   onClick={() => $fileTag.current.click()}
                 >
                   <img
-                    src={productImage || addImage}
+                    src={thumbnailImage || addImage}
                     alt='prod-image'
                     style={{ width: '225px' }}
                   />
