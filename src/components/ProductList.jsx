@@ -71,6 +71,14 @@ const ProductList = ({ pageTitle }) => {
       page: currentPage,
     };
 
+    // 만약 사용자가 조건을 선택했고, 검색어를 입력했다면 프로퍼티를 추가하자.
+    if (searchType !== 'optional' && searchValue) {
+      params.category = searchType;
+      params.searchName = searchValue;
+    }
+
+    console.log('백엔드로 보낼 params: ', params);
+
     setIsLoading(true); // 요청 보내기 바로 직전에 로딩 상태 true 만들기
 
     try {
@@ -169,6 +177,11 @@ const ProductList = ({ pageTitle }) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              // 검색 렌더링 진행 시 기존 목록을 지우고 다시 렌더링 해야 해요!
+              setProductList([]);
+              setCurrentPage(0);
+              setIsLoading(false);
+              setLastPage(false);
               loadProduct();
             }}
           >
