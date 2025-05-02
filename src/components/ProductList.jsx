@@ -21,6 +21,7 @@ import CartContext from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { throttle } from 'lodash';
+import { API_BASE_URL, PROD } from '../configs/host-config';
 
 const ProductList = ({ pageTitle }) => {
   const [searchType, setSearchType] = useState('optional');
@@ -82,7 +83,7 @@ const ProductList = ({ pageTitle }) => {
     setIsLoading(true); // 요청 보내기 바로 직전에 로딩 상태 true 만들기
 
     try {
-      const res = await axios.get('http://localhost:8181/product/list', {
+      const res = await axios.get(`${API_BASE_URL}${PROD}/list`, {
         params,
       });
       const data = await res.data;

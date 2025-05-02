@@ -15,6 +15,8 @@ import AuthContext from '../context/UserContext';
 import axiosInstance from '../configs/axios-config';
 import { useNavigate } from 'react-router-dom';
 import { handleAxiosError } from '../configs/HandleAxiosError';
+import { API_BASE_URL, USER } from '../configs/host-config';
+import OrderListComponent from './OrderListComponent';
 
 const MyPage = () => {
   const [memberInfoList, setMemberInfoList] = useState([]);
@@ -30,7 +32,7 @@ const MyPage = () => {
     const fetchMemberInfo = async () => {
       try {
         const url = userRole === 'ADMIN' ? '/list' : '/myInfo';
-        const res = await axiosInstance.get('http://localhost:8181/user' + url);
+        const res = await axiosInstance.get(`${API_BASE_URL}${USER}` + url);
 
         // ADMIN인 경우는 애초에 리스트로 리턴, 일반회원은 직접 배열로 감싸주자.(고차함수 돌려야 되니깐)
         const data = userRole === 'ADMIN' ? res.data.result : [res.data.result];
@@ -83,7 +85,7 @@ const MyPage = () => {
       </Grid>
 
       {/* OrderListComponent */}
-      {/* <OrderListComponent isAdmin={userRole === 'ADMIN'} /> */}
+      <OrderListComponent isAdmin={userRole === 'ADMIN'} />
     </Container>
   );
 };
