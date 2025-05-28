@@ -6,14 +6,38 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/UserContext';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 const Header = () => {
   // 로그인 상태에 따라 메뉴를 다르게 제공하고 싶다 -> Context에서 뽑아오면 되겠구나!
   const { isLoggedIn, onLogout, userRole } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('role: ', userRole);
+    const token = localStorage.getItem('ACCESS_TOKEN');
+
+    if (userRole === 'ADMIN') {
+      // 알림을 ㅂ다기 우해 서버와 연결을 하기 위한 요청을 하겠다.
+      const sse = new EventSourcePolyfill(`${API_BASE_URL}${SSE}/subscribe`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      sse.addEventListener('connect', (event) => {
+        console.log(event);
+      });
+
+      // 30초 마다 발생하는 알림.
+      sse.addEventListener('heartbeat', () => {
+        console.log('Received hearbeat');
+      });
+    }
+  }, [userRole]);
 
   const handleLogout = () => {
     onLogout();
